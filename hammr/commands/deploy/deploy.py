@@ -42,7 +42,7 @@ class Deploy(Cmd, CoreGlobal):
             deployments = deployments.deployments.deployment
 
             if deployments is None or len(deployments) == 0:
-                printer.out("No deployments available")
+                printer.out("No deployment available")
             else:
                 printer.out("Deployments:")
                 table = Texttable(800)
