@@ -18,11 +18,62 @@ from unittest import TestCase
 import pyxb
 from mock import patch
 from uforge.application import Api
-import hammr.commands.image
+import hammr.commands.deploy
 from hammr.utils import constants
 from uforge.objects.uforge import *
 from uforge.objects import uforge
-import datetime
 
 class TestDeployList(TestCase):
-    pass
+    # URL: users/{uid}/deployments/{did}/status
+    @patch('uforge.application.Api._Users._Deployments._Status.Getdeploystatus')
+    @patch('uforge.application.Api._Users._Deployments.Getall')
+    @patch('texttable.Texttable.add_row')
+    def test_do_list_gives_correct_number_of_deployments(self, mock_table_add_row, mock_api_deployments_getall, mock_api_getdeploystatus):
+        # given
+        i = hammr.commands.deploy.Deploy()
+        i.api = Api("url", username="username", password="password", headers=None,
+                    disable_ssl_certificate_validation=False, timeout=constants.HTTP_TIMEOUT)
+        i.login = "login"
+        i.password = "password"
+        self.create_deployments(mock_api_deployments_getall)
+        self.prepare_mock_api_getdeploystatus(mock_api_getdeploystatus)
+
+        # when
+        i.do_list("")
+
+        # then
+        self.assertEquals(mock_table_add_row.call_count, 1)
+
+    def create_deployments(self,mock_api_deployments_getall):
+        new_deployments = uforge.deployments()
+        new_deployments.deployments = pyxb.BIND()
+
+        newdeployment = self.create_deployment()
+        new_deployments.deployments.append(newdeployment)
+
+        mock_api_deployments_getall.return_value = new_deployments
+
+    def create_deployment(self):
+        deployment = Deployment()
+        deployment.name = "DeploymentName"
+        deployment.applicationId = "id123456789"
+
+        myinstance = Instance()
+        myinstance.cores = "1"
+        myinstance.memory = "1024"
+        myinstance.hostname = "example.com"
+        myLocation = Location()
+        myLocation.provider = "myprovider"
+        myinstance.location = myLocation
+
+        deployment.instances = pyxb.BIND()
+        deployment.instances._ExpandedName = pyxb.namespace.ExpandedName(Namespace, 'Instances')
+        deployment.instances.append(myinstance)
+
+        return deployment
+
+    def prepare_mock_api_getdeploystatus(self, mock_api_getdeploystatus):
+        statusRunning = OpStatus()
+        statusRunning.message = "running"
+        mock_api_getdeploystatus.return_value = statusRunning
+
