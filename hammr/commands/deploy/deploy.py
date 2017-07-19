@@ -102,14 +102,18 @@ class Deploy(Cmd, CoreGlobal):
             doParser = self.arg_terminate()
             doArgs = doParser.parse_args(shlex.split(args))
 
-            if (not doArgs.force and generics_utils.query_yes_no("Do you really want to delete deployment with id '" + str(doArgs.id) + "'")) or doArgs.force:
+            deployment = self.api.Users(self.login).Deployments(doArgs.id).Get()
+            if (not doArgs.force and generics_utils.query_yes_no("Do you really want to delete deployment with id '" + str(doArgs.id) + "' named '" + deployment.name + "'")) or doArgs.force:
+                # When terminating a running deployment, we stop if the status goes to on-fire.
+                # But when terminating an on-fire deployment we stop if it is terminated.
+                # So we need to get the status before invoking the terminate.
                 status = self.api.Users(self.login).Deployments(doArgs.id).Status.Getdeploystatus()
-                deployment_terminate = self.api.Users(self.login).Deployments(doArgs.id).Terminate()
+                self.api.Users(self.login).Deployments(doArgs.id).Terminate()
                 printer.out("Deployment is stopping")
                 bar = ProgressBar(widgets=[BouncingBar()], maxval=UnknownLength)
                 bar.start()
                 i = 1
-                while (self.get_deploy(doArgs.id)):
+                while (self.deployment_exists(doArgs.id)):
                     if status.message != "on-fire":
                         status = self.api.Users(self.login).Deployments(doArgs.id).Status.Getdeploystatus()
                         if status.message == "on-fire":
@@ -119,7 +123,7 @@ class Deploy(Cmd, CoreGlobal):
                     i += 2
                 bar.finish()
 
-                if self.get_deploy(doArgs.id):
+                if self.deployment_exists(doArgs.id):
                     printer.out("Could not terminate the deployment.", printer.ERROR)
                     if status.message == "on-fire" and status.detailedError:
                         printer.out(status.detailedErrorMsg, printer.ERROR)
@@ -138,7 +142,7 @@ class Deploy(Cmd, CoreGlobal):
         doParser = self.arg_terminate()
         doParser.print_help()
 
-    def get_deploy(self, deploy_id):
+    def deployment_exists(self, searched_deploy_id):
         deployments = self.api.Users(self.login).Deployments.Getall()
         deployments = deployments.deployments.deployment
 
@@ -147,6 +151,6 @@ class Deploy(Cmd, CoreGlobal):
         else:
             for deployment in deployments:
                 deployment_id = deployment.applicationId
-                if deployment_id == deploy_id:
+                if deployment_id == searched_deploy_id:
                     return True
         return False

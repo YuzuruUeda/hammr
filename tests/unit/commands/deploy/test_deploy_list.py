@@ -25,10 +25,9 @@ from uforge.objects import uforge
 
 class TestDeployList(TestCase):
     # URL: users/{uid}/deployments/{did}/status
-    @patch('uforge.application.Api._Users._Deployments._Status.Getdeploystatus')
     @patch('uforge.application.Api._Users._Deployments.Getall')
     @patch('texttable.Texttable.add_row')
-    def test_do_list_gives_correct_number_of_deployments(self, mock_table_add_row, mock_api_deployments_getall, mock_api_getdeploystatus):
+    def test_do_list_gives_correct_number_of_deployments(self, mock_table_add_row, mock_api_deployments_getall):
         # given
         i = hammr.commands.deploy.Deploy()
         i.api = Api("url", username="username", password="password", headers=None,
@@ -36,10 +35,9 @@ class TestDeployList(TestCase):
         i.login = "login"
         i.password = "password"
         self.create_deployments(mock_api_deployments_getall)
-        self.prepare_mock_api_getdeploystatus(mock_api_getdeploystatus)
 
         # when
-        i.do_list("")
+        i.do_list(None)
 
         # then
         self.assertEquals(mock_table_add_row.call_count, 1)
@@ -57,6 +55,7 @@ class TestDeployList(TestCase):
         deployment = Deployment()
         deployment.name = "DeploymentName"
         deployment.applicationId = "id123456789"
+        deployment.state = "running"
 
         myinstance = Instance()
         myinstance.cores = "1"
@@ -71,9 +70,3 @@ class TestDeployList(TestCase):
         deployment.instances.append(myinstance)
 
         return deployment
-
-    def prepare_mock_api_getdeploystatus(self, mock_api_getdeploystatus):
-        statusRunning = OpStatus()
-        statusRunning.message = "running"
-        mock_api_getdeploystatus.return_value = statusRunning
-
