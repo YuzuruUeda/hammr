@@ -103,7 +103,7 @@ class Deploy(Cmd, CoreGlobal):
             doParser = self.arg_terminate()
             doArgs = doParser.parse_args(shlex.split(args))
 
-            if (not doArgs.force and generics_utils.query_yes_no("Do you really want to delete deployment with id " + str(doArgs.id))) or doArgs.force:
+            if (not doArgs.force and generics_utils.query_yes_no("Do you really want to delete deployment with id '" + str(doArgs.id) + "'")) or doArgs.force:
                 status = self.api.Users(self.login).Deployments(doArgs.id).Status.Getdeploystatus()
                 deployment_terminate = self.api.Users(self.login).Deployments(doArgs.id).Terminate()
                 printer.out("Deployment is stopping")
