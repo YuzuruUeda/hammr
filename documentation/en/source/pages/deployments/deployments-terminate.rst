@@ -5,7 +5,7 @@
 Terminating a deployment
 ========================
 
-You terminate a deployments by running ``deploy terminate``:
+You terminate a deployment by running ``deploy terminate``:
 
 .. code-block:: shell
 
