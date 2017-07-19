@@ -59,8 +59,7 @@ class Deploy(Cmd, CoreGlobal):
                 deployments = generics_utils.order_list_object_by(deployments, "name")
                 for deployment in deployments:
                     deployment_id = deployment.applicationId
-                    deployment_status = self.api.Users(self.login).Deployments(deployment_id).Status.Getdeploystatus()
-                    deployment_status = deployment_status.message
+                    deployment_status = deployment.state
                     instances = deployment.instances.instance
                     instance = instances[-1]
                     if instance.scanSummary:
