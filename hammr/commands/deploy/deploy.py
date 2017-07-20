@@ -103,7 +103,7 @@ class Deploy(Cmd, CoreGlobal):
             doArgs = doParser.parse_args(shlex.split(args))
 
             deployment = self.api.Users(self.login).Deployments(doArgs.id).Get()
-            if (not doArgs.force and generics_utils.query_yes_no("Do you really want to delete deployment with id '" + str(doArgs.id) + "' named '" + deployment.name + "'")) or doArgs.force:
+            if doArgs.force or generics_utils.query_yes_no("Do you really want to delete deployment with id '" + str(doArgs.id) + "' named '" + deployment.name + "'"):
                 # When terminating a running deployment, we stop if the status goes to on-fire.
                 # But when terminating an on-fire deployment we stop if it is terminated.
                 # So we need to get the status before invoking the terminate.
