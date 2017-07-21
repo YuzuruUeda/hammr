@@ -108,23 +108,28 @@ class Deploy(Cmd, CoreGlobal):
                 # But when terminating an on-fire deployment we stop if it is terminated.
                 # So we need to get the status before invoking the terminate.
                 status = self.api.Users(self.login).Deployments(doArgs.id).Status.Getdeploystatus()
+                initial_status = status.message
                 self.api.Users(self.login).Deployments(doArgs.id).Terminate()
                 printer.out("Deployment is stopping")
                 bar = ProgressBar(widgets=[BouncingBar()], maxval=UnknownLength)
                 bar.start()
                 i = 1
-                while (self.deployment_exists(doArgs.id)):
-                    if status.message != "on-fire":
-                        status = self.api.Users(self.login).Deployments(doArgs.id).Status.Getdeploystatus()
-                        if status.message == "on-fire":
+                while ( True ):
+                    deployment = self.get_deployment(doArgs.id)
+                    if deployment is None:
+                        break;
+                    if initial_status != "on-fire":
+                        if deployment.state == "on-fire":
+                            # If the deployment went from running to on-fire, we stop and print an error message
                             break
                     time.sleep(1)
                     bar.update(i)
                     i += 2
                 bar.finish()
 
-                if self.deployment_exists(doArgs.id):
+                if deployment:
                     printer.out("Could not terminate the deployment.", printer.ERROR)
+                    status = self.api.Users(self.login).Deployments(doArgs.id).Status.Getdeploystatus()
                     if status.message == "on-fire" and status.detailedError:
                         printer.out(status.detailedErrorMsg, printer.ERROR)
                     return 1
